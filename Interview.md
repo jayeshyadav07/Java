@@ -127,3 +127,66 @@ System.out.println(c.equals(d));  // true  (compares values)
 - new Integer(...) is deprecated. Use Integer.valueOf() or autoboxing.
 
 > Likely follow-up: “Why use the cache?” It saves memory and allocation time for common small values.   
+
+
+## 7. String pool at a glance
+
+String literals go into the String Pool, a special area inside the heap (moved from PermGen to the main heap in Java 7). Same literal = same object. new always makes a fresh object outside the pool.
+```java
+String s1 = "abc";
+String s2 = "abc";              // reuses pooled object
+String s3 = new String("abc");   // new heap object
+
+s1 == s2           // true  (same object)
+s1 == s3           // false (different objects)
+s1.equals(s3)      // true  (same content)
+s1 == s3.intern()  // true  (intern returns the pooled one)
+```
+Two literals point to the same pooled object; new creates a separate heap copy, and intern() leads back to the pooled one.
+
+## 8. Why String is immutable — 4 reasons
+
+1. `Security` — Strings carry file paths, URLs, DB usernames/passwords and class names for class loading. If a String could change after a security check, someone could swap the value (e.g. check /safe/file, then change it to /etc/passwd).
+
+2. `Caching hashCode` — String stores its hash in a field after the first hashCode() call. Since the value never changes, the hash never changes. This is why String is the best HashMap key: if a key could mutate, its hash would change and the entry would be lost in the wrong bucket.
+
+3. `Thread safety` — An immutable object can be shared by many threads with no synchronized and no risk of one thread seeing half-changed data.
+
+4. `String pool` — The pool only works because Strings can't change. If s1 could modify the shared "abc", then s2 (and every other reference to it) would also change silently.
+
+## 9. How many objects does new String("abc") create?
+
+**Up to 2.**
+- One "abc" in the String Pool — for the literal. Created only if the pool doesn't already have it (it's added when the class is loaded/the literal is first resolved).
+- One new String object on the heap — always, because of new.
+
+`So`: pool empty → 2 objects; pool already has "abc" → 1 new object.
+StringBuilder vs StringBuffer
+
+| Feature | StringBuilder | StringBuffer |
+|---|---|---|
+| Mutable? | Yes | Yes |
+| Thread-safe? | No | Yes (methods are synchronized) |
+| Speed | Faster | Slower (locking cost) |
+| Since | Java 5 | Java 1.0 |
+| Use when | Default choice, single thread (almost always) | Same buffer truly shared across threads (rare) |
+
+> Why not just `+` in a loop? 
+>
+> Each `+` on a String creates a new object, so building a string in a loop with `+` makes many throwaway objects. Use StringBuilder.append() instead.
+
+## 10. What is String.intern()?
+
+`intern()` returns the pooled (canonical) copy of a string.
+- If the pool already has an equal string → returns that pooled reference.
+- If not → adds this string to the pool (Java 7+ stores a reference to the existing heap object) and returns it.
+
+```java
+String a = new String("hello");
+String b = a.intern();
+b == "hello"   // true
+a == b         // false (a is still the heap copy)
+```
+*Use case*: saving memory when you have many duplicate strings (e.g. repeated values read from a file). Rarely needed in day-to-day code — don't overuse it.
+
+>String is immutable for security, hashCode caching, thread safety and to make the String Pool possible. new String("abc") creates up to two objects — one in the pool, one on the heap. StringBuilder is fast and not thread-safe; StringBuffer is synchronized and slower. intern() returns the pooled copy of a string.
