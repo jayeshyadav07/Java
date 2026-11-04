@@ -142,6 +142,8 @@ s1 == s3           // false (different objects)
 s1.equals(s3)      // true  (same content)
 s1 == s3.intern()  // true  (intern returns the pooled one)
 ```
+![String Pool Image](assets/StringPool.png)
+
 Two literals point to the same pooled object; new creates a separate heap copy, and intern() leads back to the pooled one.
 
 ## 8. Why String is immutable — 4 reasons
