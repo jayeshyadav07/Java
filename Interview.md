@@ -461,3 +461,91 @@ Two `Student` objects can have the same name but still be distinct objects with 
 - `Student s1;` declares a reference variable but does not create an object.
 - `Student s1 = new Student();` declares a reference variable, creates a new `Student` object, and assigns its reference to `s1`.
 ---
+
+## Q16. What is Constructor Overloading in Java?
+
+**Answer:** Constructor overloading means defining multiple constructors in the same class with different parameter lists. It allows us to initialize objects in different ways.
+
+```java
+class Student {
+    String name;
+    int age;
+
+    Student() {
+        name = "Unknown";
+        age = 0;
+    }
+
+    Student(String n, int a) {
+        name = n;
+        age = a;
+    }
+}
+```
+
+**Key point:** Constructors must differ in the number, type, or order of parameters. Changing only the parameter names does not overload a constructor.
+
+## Q17. What is Constructor Chaining in Java?
+
+**Answer:** Constructor chaining is the process of calling one constructor from another constructor.
+
+Use `this()` to call another constructor in the same class.
+
+```java
+class Student {
+    String name;
+    int age;
+
+    Student() {
+        this("Unknown", 18);
+    }
+
+    Student(String name, int age) {
+        this.name = name;
+        this.age = age;
+    }
+}
+```
+
+**Key points:**
+- `this()` calls another constructor in the same class.
+- `super()` calls a constructor in the parent class.
+- In standard beginner-level Java examples, an explicit `this()` or `super()` constructor call is the first statement in the constructor. Newer Java versions support some statements before an explicit constructor invocation under specific rules.
+
+## Q18. What is the `this` Keyword in Java?
+
+**Answer:** The `this` keyword refers to the current object. It is commonly used to distinguish instance variables from local variables or parameters.
+
+```java
+class Student {
+    String name;
+
+    Student(String name) {
+        this.name = name;
+    }
+}
+```
+
+Here:
+- `this.name` refers to the instance variable.
+- `name` refers to the constructor parameter.
+
+### Difference Between `this` and `this()`
+
+| `this` | `this()` |
+|---|---|
+| Refers to the current object | Calls another constructor in the same class |
+| Used to access instance members | Used for constructor chaining |
+| Used in instance contexts | Used in constructors |
+
+### Bonus: Can a Constructor Call Itself Using `this()`?
+
+**Answer:** No. Recursive constructor invocation is not allowed in Java and results in a compile-time error.
+
+```java
+class Example {
+    Example() {
+        this(); // Compile-time error: recursive constructor invocation
+    }
+}
+```
