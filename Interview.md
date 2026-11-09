@@ -192,3 +192,203 @@ a == b         // false (a is still the heap copy)
 *Use case*: saving memory when you have many duplicate strings (e.g. repeated values read from a file). Rarely needed in day-to-day code — don't overuse it.
 
 >String is immutable for security, hashCode caching, thread safety and to make the String Pool possible. new String("abc") creates up to two objects — one in the pool, one on the heap. StringBuilder is fast and not thread-safe; StringBuffer is synchronized and slower. intern() returns the pooled copy of a string.
+
+## Q11. How are negative numbers stored in Java?
+
+### Short answer (say this first in the interview)
+> Java stores negative integers using **Two's Complement**. All integer types (`byte`, `short`, `int`, `long`) are **signed**, and the **leftmost bit (MSB)** is the sign bit: `0` = positive, `1` = negative.
+
+### How to get Two's Complement (3 steps)
+1. Write the positive number in binary.
+2. **Invert** all bits (0 → 1, 1 → 0). This is called One's Complement.
+3. **Add 1**.
+
+### Example: store `-5` in a `byte` (8 bits)
+
+| Step | Binary |
+|------|--------|
+| `+5` in binary | `0000 0101` |
+| Invert bits | `1111 1010` |
+| Add 1 | `1111 1011` ← this is **-5** |
+
+As an `int` (32 bits), `-5` is:
+```
+11111111 11111111 11111111 11111011
+```
+
+Check it in code:
+```java
+System.out.println(Integer.toBinaryString(-5));
+// 11111111111111111111111111111011
+```
+
+### Why Java uses Two's Complement (common follow-up)
+- **Only one zero.** In sign-magnitude, there would be `+0` and `-0`. Two's complement has a single `0`.
+- **Same hardware for add and subtract.** `a - b` is just `a + (-b)`. The CPU does not need separate logic.
+- **No special handling of the sign** during addition.
+
+### Range of integer types
+
+| Type | Size | Range |
+|------|------|-------|
+| `byte` | 8 bits | -128 to 127 |
+| `short` | 16 bits | -32,768 to 32,767 |
+| `int` | 32 bits | -2³¹ to 2³¹ - 1 (≈ -2.1 billion to 2.1 billion) |
+| `long` | 64 bits | -2⁶³ to 2⁶³ - 1 |
+
+Notice: the negative side has **one extra value**. That's because `0` uses one of the "positive" patterns.
+
+### Tricky follow-up questions
+
+**1. What is `Integer.MAX_VALUE + 1`?**
+```java
+System.out.println(Integer.MAX_VALUE + 1); // -2147483648 (Integer.MIN_VALUE)
+```
+Overflow wraps around. Java does **not** throw an error. (Use `Math.addExact()` if you want an exception.)
+
+**2. What is `Math.abs(Integer.MIN_VALUE)`?**
+```java
+System.out.println(Math.abs(Integer.MIN_VALUE)); // -2147483648 (still negative!)
+```
+Because `+2147483648` does not fit in an `int`.
+
+**3. `(byte) 200` gives what?**
+```java
+System.out.println((byte) 200); // -56
+```
+`200` = `1100 1000`. MSB is 1, so as a byte it is read as negative → 200 - 256 = **-56**.
+
+**4. Difference between `>>` and `>>>`?**
+- `>>` (signed right shift) keeps the sign bit → negative stays negative.
+- `>>>` (unsigned right shift) fills with `0` → result becomes positive.
+```java
+System.out.println(-8 >> 1);   // -4
+System.out.println(-8 >>> 1);  // 2147483644
+```
+
+**5. Does Java have unsigned int?**
+No primitive `unsigned int`. `char` (16-bit) is the only unsigned primitive. Since Java 8, you can use helper methods like `Integer.toUnsignedString()` and `Integer.divideUnsigned()`.
+
+---
+
+## Q12. How are float values stored in memory?
+
+### Short answer (say this first)
+> Java stores `float` and `double` using the **IEEE 754** standard. The number is stored like scientific notation in binary:
+> **value = (-1)^sign × 1.mantissa × 2^(exponent - bias)**
+
+### Bit layout
+
+| Type | Total | Sign | Exponent | Mantissa (fraction) | Bias | Precision |
+|------|-------|------|----------|---------------------|------|-----------|
+| `float` | 32 bits | 1 | 8 | 23 | 127 | ~6–7 decimal digits |
+| `double` | 64 bits | 1 | 11 | 52 | 1023 | ~15–16 decimal digits |
+
+```
+float:  [S][EEEEEEEE][MMMMMMMMMMMMMMMMMMMMMMM]
+         1     8               23
+```
+
+- **Sign (S):** `0` = positive, `1` = negative. (Floats do **not** use two's complement.)
+- **Exponent:** stored with a **bias** (127 for float), so negative exponents can be stored without a sign bit.
+- **Mantissa:** the digits after the point. The leading `1.` is **not stored** (called the "hidden bit"), which saves 1 bit.
+
+### Example: store `5.75f`
+
+**Step 1 – Convert to binary**
+- `5` = `101`
+- `.75` = `.11`
+- So `5.75` = `101.11`
+
+**Step 2 – Normalize (move point after the first 1)**
+- `101.11` = `1.0111 × 2²`
+
+**Step 3 – Fill the 3 parts**
+- Sign = `0` (positive) 
+- Bias = `127` (2 ^ (exponent - 1) - 1)
+- Exponent = 2 + 127 = **129** = `10000001`
+- Mantissa = `0111` followed by zeros = `01110000000000000000000`
+
+**Result:**
+```
+0 10000001 01110000000000000000000
+= 0x40B80000
+```
+
+Verify in Java:
+```java
+System.out.println(Integer.toHexString(Float.floatToIntBits(5.75f))); // 40b80000
+```
+
+For `-5.75f`, only the sign bit changes to `1` → `0xC0B80000`.
+
+### Special values
+
+| Value | Exponent bits | Mantissa bits |
+|-------|---------------|---------------|
+| `0.0` / `-0.0` | all 0 | all 0 |
+| `Infinity` / `-Infinity` | all 1 | all 0 |
+| `NaN` | all 1 | not all 0 |
+| Very tiny numbers (denormal) | all 0 | not all 0 |
+
+```java
+System.out.println(1.0 / 0);        // Infinity
+System.out.println(0.0 / 0);        // NaN
+System.out.println(Double.NaN == Double.NaN); // false
+System.out.println(0.0 == -0.0);    // true
+```
+
+### Tricky follow-up questions
+
+**1. Why is `0.1 + 0.2 != 0.3`?**
+```java
+System.out.println(0.1 + 0.2);        // 0.30000000000000004
+System.out.println(0.1 + 0.2 == 0.3); // false
+```
+`0.1` in binary is a **repeating fraction** (like 1/3 in decimal = 0.333...). It can't be stored exactly, so a tiny rounding error appears.
+
+**2. How do you compare two floats/doubles safely?**
+Use a small tolerance (epsilon):
+```java
+Math.abs(a - b) < 1e-9
+```
+Or use `Double.compare(a, b)`.
+
+**3. Should you use `float`/`double` for money?**
+**No.** For ₹ amounts (prices, salaries, bank balance), use `BigDecimal`, created from a **String**:
+```java
+BigDecimal a = new BigDecimal("0.1");
+BigDecimal b = new BigDecimal("0.2");
+System.out.println(a.add(b)); // 0.3
+```
+`new BigDecimal(0.1)` (from double) still carries the error. Always use the String constructor or `BigDecimal.valueOf()`.
+
+**4. Why do we write `f` in `float x = 3.14f;`?**
+A decimal literal is `double` by default. Without `f`, it's a compile error (possible lossy conversion from double to float).
+
+**5. Can a `float` hold every `int` value exactly?**
+No. `float` has only 24 bits of precision (23 + hidden bit). Integers above 2²⁴ (16,777,216) may lose accuracy.
+```java
+System.out.println((float) 16777217); // 1.6777216E7
+```
+
+---
+
+## Quick Revision Table
+
+| Point | Integers (negative) | float / double |
+|-------|---------------------|----------------|
+| Standard | Two's complement | IEEE 754 |
+| Sign | MSB, part of the value | Separate sign bit |
+| Exact? | Yes (within range) | Not always (rounding) |
+| Overflow | Wraps around silently | Becomes `Infinity` |
+| Divide by 0 | `ArithmeticException` | `Infinity` or `NaN` |
+| Number of zeros | One | Two (`+0.0`, `-0.0`) |
+
+---
+
+## 30-second interview answer
+
+> "In Java, negative integers are stored using two's complement: you invert the bits of the positive number and add 1. The MSB acts as the sign bit. It's used because there's only one zero and addition/subtraction use the same hardware.
+>
+> Float and double follow IEEE 754. A float is 32 bits: 1 sign bit, 8 exponent bits with a bias of 127, and 23 mantissa bits with a hidden leading 1. Double is 64 bits: 1, 11, 52 with a bias of 1023. Because many decimals like 0.1 can't be represented exactly in binary, we get rounding errors, so for money we use BigDecimal."
