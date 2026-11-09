@@ -392,3 +392,72 @@ System.out.println((float) 16777217); // 1.6777216E7
 > "In Java, negative integers are stored using two's complement: you invert the bits of the positive number and add 1. The MSB acts as the sign bit. It's used because there's only one zero and addition/subtraction use the same hardware.
 >
 > Float and double follow IEEE 754. A float is 32 bits: 1 sign bit, 8 exponent bits with a bias of 127, and 23 mantissa bits with a hidden leading 1. Double is 64 bits: 1, 11, 52 with a bias of 1023. Because many decimals like 0.1 can't be represented exactly in binary, we get rounding errors, so for money we use BigDecimal."
+
+
+## Q13. What is the difference between a Class and an Object?
+
+**Answer:**
+- **Class:** A blueprint or template used to create objects.
+- **Object:** An instance of a class that has state and behavior.
+
+**Example:**
+
+```java
+class Student {
+    String name;
+    int age;
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Student s1 = new Student();
+    }
+}
+```
+
+Here, `Student` is the class, and `s1` refers to an object of that class.
+
+## Q14. What is the difference between Procedural Programming and Object-Oriented Programming?
+
+**Answer:**
+
+| Procedural Programming | Object-Oriented Programming |
+|---|---|
+| Focuses on functions and procedures | Focuses on classes and objects |
+| Data and functions are generally separate | Groups related data and methods in classes |
+| Example: C | Example: Java |
+| Organizes code around procedures | Organizes code around objects |
+
+**Interview-ready answer:** OOP helps organize large applications by combining related data and behavior into objects, supporting modularity, reusability, and maintainability.
+
+## Q15. What are the three main characteristics of an Object?
+
+**Answer:**
+
+1. **State:** The data or properties of an object, such as a student's name and age.
+2. **Behavior:** Actions an object can perform, such as `study()`.
+3. **Identity:** What distinguishes one object from another, even if their state is the same.
+
+**Example:**
+
+```java
+class Student {
+    String name = "Rahul"; // State
+
+    void study() {         // Behavior
+        System.out.println("Studying");
+    }
+}
+```
+
+Two `Student` objects can have the same name but still be distinct objects with different identities.
+
+---
+
+### Bonus: Common Follow-Up Question
+
+**What is the difference between `Student s1;` and `Student s1 = new Student();`?**
+
+- `Student s1;` declares a reference variable but does not create an object.
+- `Student s1 = new Student();` declares a reference variable, creates a new `Student` object, and assigns its reference to `s1`.
+---
