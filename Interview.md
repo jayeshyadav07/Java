@@ -549,3 +549,113 @@ class Example {
     }
 }
 ```
+
+## Q19. Encapsulation
+
+**Encapsulation** means bundling data (fields) and methods in a class while controlling access to the object's internal state.
+
+Common Java techniques:
+- Declare fields `private` to prevent direct access from other classes.
+- Expose carefully designed methods (getters, setters, or operations).
+- Validate inputs when required to maintain a valid state.
+- Return defensive copies of mutable internal objects when necessary.
+
+> **Remember:** Encapsulation is **not** simply making every field private and generating getters/setters.
+
+### Java Example
+
+```java
+class Employee {
+    private String name;
+    private int age;
+
+    public Employee(String name, int age) {
+        if (age < 18 || age > 60) {
+            throw new IllegalArgumentException("Invalid age");
+        }
+        this.name = name;
+        this.age = age;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public int getAge() {
+        return age;
+    }
+
+    public void setAge(int age) {
+        if (age >= 18 && age <= 60) {
+            this.age = age;
+        }
+    }
+}
+```
+
+### Access Modifiers
+
+| Modifier | Accessible from |
+|---|---|
+| `private` | Declaring class only |
+| *package-private* (no modifier) | Same package |
+| `protected` | Same package; subclasses in other packages, with restrictions |
+| `public` | Anywhere the class is accessible |
+
+### Data Hiding vs. Encapsulation
+
+| Data hiding | Encapsulation |
+|---|---|
+| Restricts direct access to implementation details | Bundles state and behavior behind a controlled interface |
+| Commonly uses `private` | Uses appropriate access control and class methods |
+| Focus: visibility | Focus: object design and protecting state |
+
+### Common Mistakes
+
+**Unrestricted setter:**
+
+```java
+public void setAge(int age) {
+    this.age = age; // Allows invalid ages if the class has an age rule
+}
+```
+
+**Forgetting `this`:**
+
+```java
+age = age;      // Parameter assigned to itself
+this.age = age; // Instance field updated
+```
+
+**Exposing a mutable field through a getter:**
+
+```java
+private int[] scores = {80, 90};
+
+public int[] getScores() {
+    return scores.clone(); // Safe copy for primitive array
+}
+```
+
+For a mutable list, `return new ArrayList<>(subjects);` makes a **shallow copy**. If its elements are mutable, additional protection may be needed.
+
+### Interview Quick Answers
+
+| Question | Answer |
+|---|---|
+| Can encapsulation exist without getters/setters? | **Yes.** Expose operations such as `deposit()` or `withdraw()`. |
+| Must every setter validate? | **No.** Only when the object's rules require it. |
+| Does `private` guarantee full encapsulation? | **No.** A getter could expose mutable internal state. |
+| Why use `this`? | To distinguish an instance field from a parameter/local variable. |
+| Are `String` getters generally safe? | **Yes.** `String` is immutable. |
+| Encapsulation vs. abstraction? | Encapsulation controls state/access; abstraction exposes essential behavior while hiding implementation detail. |
+
+### Advantages
+
+- Protects object state from uncontrolled changes.
+- Enforces validation and invariants.
+- Makes code easier to maintain and change.
+- Allows selective read-only or controlled access.
+
+**Memory trick:** `Private Data + Controlled Access + Valid State = Strong Encapsulation`
+
